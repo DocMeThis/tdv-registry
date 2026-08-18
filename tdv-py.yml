@@ -1,0 +1,2994 @@
+# TDV-PY — Python Taxonomy of Documentation Violations
+# Canonical registry proposal.
+#
+# A TDV-PY rule defines a semantic diagnostic, not a detection algorithm.
+# `related` expresses relationships between canonical TDV-PY rules; it does not prescribe
+# emission, precedence, or de-duplication policy to implementations.
+# `implementations` records known native/tool codes. `mapping` is used only when a
+# tool code does not map straightforwardly to the canonical predicate; it takes a
+# restricted enum value (`broader`, `narrower`, `overlap`, `aggregate`,
+# `historical`, `policy-dependent`, `review-required`), optionally complemented
+# by a free-form `note` field.
+# `fixers` records known automatic correction paths (for example `ruff-check`,
+# `ruff-format`, or `docmethis-fix`). Absence of `fixers` means no fixer is recorded.
+#
+# During the DocMeThis migration, implementation codes use
+# `DMT-XXXX+(DMT-YYY)`: `XXXX` is aligned with the canonical TDV-PY code and
+# `YYY` is the legacy DMT code. The `+(DMT-YYY)` suffix is transitional.
+
+_meta:
+  registry: TDV-PY
+  language: Python
+  version: 0.1.0
+
+# ============================================================================
+# 0xxx — Parsing and validation
+# ============================================================================
+
+# 00xx — Source and docstring parsing
+TDV-PY-0001:
+  name: unparseable-python-source
+  definition: >
+    The Python source file cannot be parsed, so its documentation cannot be
+    analyzed reliably.
+  implementations:
+    docmethis:
+      code: DMT-0001+(DMT-021)
+      mapping: broader
+    pydoclint:
+      code: DOC002
+    darglint:
+      code: DAR000
+
+TDV-PY-0002:
+  name: unparseable-docstring
+  definition: >
+    The docstring cannot be parsed into a recognized structure, so its content
+    cannot be validated.
+  implementations:
+    docmethis:
+      code: DMT-0002+(DMT-450)
+    pydoclint:
+      code: DOC001
+    darglint:
+      code: DAR001
+
+# 01xx — Docstyle identification and compatibility
+TDV-PY-0101:
+  name: docstyle-mismatch
+  definition: >
+    The documentation uses a style that differs from the style expected or
+    configured for the project.
+  implementations:
+    docmethis:
+      code: DMT-0101+(DMT-451)
+    pydoclint:
+      code: DOC003
+
+TDV-PY-0102:
+  name: aggregate-docstyle-nonconformity
+  definition: >
+    The documentation as a whole does not conform to the expected style, without a
+    single precise violation being identifiable.
+  implementations:
+    docmethis:
+      code: DMT-0102+(DMT-452)
+
+
+# ============================================================================
+# 1xxx — Missing documentation
+# ============================================================================
+
+# 10xx — Visibility-independent
+TDV-PY-1000:
+  name: undocumented-object
+  definition: >
+    An object that deserves documentation carries none at all.
+  implementations:
+    numpydoc:
+      code: GL08
+    pylint-docstrings:
+      code: C0111
+      mapping: aggregate
+      note: historical code; superseded by specific undocumented-* rules
+
+TDV-PY-1001:
+  name: undocumented-module
+  definition: >
+    A module carries no docstring.
+  implementations:
+    pylint-docstrings:
+      code: C0114
+  related:
+    - code: TDV-PY-1000
+      relation: specializes
+
+TDV-PY-1002:
+  name: undocumented-package
+  definition: >
+    A package carries no docstring.
+  related:
+    - code: TDV-PY-1000
+      relation: specializes
+
+TDV-PY-1010:
+  name: undocumented-class
+  definition: >
+    A class carries no docstring.
+  implementations:
+    pylint-docstrings:
+      code: C0115
+  related:
+    - code: TDV-PY-1000
+      relation: specializes
+
+TDV-PY-1020:
+  name: undocumented-function
+  definition: >
+    A function carries no docstring.
+  implementations:
+    pylint-docstrings:
+      code: C0116
+  related:
+    - code: TDV-PY-1000
+      relation: specializes
+
+TDV-PY-1030:
+  name: undocumented-method
+  definition: >
+    A method carries no docstring.
+  implementations:
+    pylint-docstrings:
+      code: C0116
+      mapping: broader
+      note: applies to functions and methods alike
+  related:
+    - code: TDV-PY-1000
+      relation: specializes
+
+TDV-PY-1031:
+  name: undocumented-magic-method
+  definition: >
+    A magic (dunder) method carries no docstring.
+  implementations:
+    pydocstyle:
+      code: D105
+    ruff:
+      code: D105
+  related:
+    - code: TDV-PY-1030
+      relation: specializes
+
+TDV-PY-1040:
+  name: undocumented-property
+  definition: >
+    A property carries no docstring.
+  implementations:
+    pylint-docstrings:
+      code: C0116
+      mapping: broader
+      note: applies to functions and methods alike
+  related:
+    - code: TDV-PY-1000
+      relation: specializes
+
+TDV-PY-1050:
+  name: undocumented-attribute
+  definition: >
+    An attribute carries no documentation.
+  related:
+    - code: TDV-PY-1000
+      relation: specializes
+
+# 11xx — Public
+TDV-PY-1101:
+  name: undocumented-public-module
+  definition: >
+    A public module carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1101+(DMT-100)
+    pydocstyle:
+      code: D100
+    ruff:
+      code: D100
+  related:
+    - code: TDV-PY-1001
+      relation: specializes
+
+TDV-PY-1102:
+  name: undocumented-public-package
+  definition: >
+    A public package carries no documentation.
+  implementations:
+    pydocstyle:
+      code: D104
+    ruff:
+      code: D104
+  related:
+    - code: TDV-PY-1002
+      relation: specializes
+
+TDV-PY-1110:
+  name: undocumented-public-class
+  definition: >
+    A public class carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1110+(DMT-105)
+    pydocstyle:
+      code: D101
+    ruff:
+      code: D101
+  related:
+    - code: TDV-PY-1010
+      relation: specializes
+
+TDV-PY-1111:
+  name: undocumented-public-nested-class
+  definition: >
+    A public nested class carries no documentation.
+  implementations:
+    pydocstyle:
+      code: D106
+    ruff:
+      code: D106
+  related:
+    - code: TDV-PY-1110
+      relation: specializes
+
+TDV-PY-1120:
+  name: undocumented-public-function
+  definition: >
+    A public function carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1120+(DMT-110)
+    pydocstyle:
+      code: D103
+    ruff:
+      code: D103
+  related:
+    - code: TDV-PY-1020
+      relation: specializes
+
+TDV-PY-1130:
+  name: undocumented-public-method
+  definition: >
+    A public method carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1130+(DMT-115)
+    pydocstyle:
+      code: D102
+    ruff:
+      code: D102
+  related:
+    - code: TDV-PY-1030
+      relation: specializes
+
+TDV-PY-1132:
+  name: undocumented-public-init
+  definition: >
+    The __init__ method carries no documentation.
+  implementations:
+    pydocstyle:
+      code: D107
+    ruff:
+      code: D107
+  related:
+    - code: TDV-PY-1130
+      relation: specializes
+
+TDV-PY-1140:
+  name: undocumented-public-property
+  definition: >
+    A public property carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1140+(DMT-120)
+  related:
+    - code: TDV-PY-1040
+      relation: specializes
+
+TDV-PY-1150:
+  name: undocumented-public-attribute
+  definition: >
+    A public attribute carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1150+(DMT-125)
+  related:
+    - code: TDV-PY-1050
+      relation: specializes
+
+# 12xx — Protected
+TDV-PY-1201:
+  name: undocumented-protected-module
+  definition: >
+    A protected module carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1201+(DMT-101)
+  related:
+    - code: TDV-PY-1001
+      relation: specializes
+
+TDV-PY-1210:
+  name: undocumented-protected-class
+  definition: >
+    A protected class carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1210+(DMT-106)
+  related:
+    - code: TDV-PY-1010
+      relation: specializes
+
+TDV-PY-1220:
+  name: undocumented-protected-function
+  definition: >
+    A protected function carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1220+(DMT-111)
+  related:
+    - code: TDV-PY-1020
+      relation: specializes
+
+TDV-PY-1230:
+  name: undocumented-protected-method
+  definition: >
+    A protected method carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1230+(DMT-116)
+  related:
+    - code: TDV-PY-1030
+      relation: specializes
+
+TDV-PY-1240:
+  name: undocumented-protected-property
+  definition: >
+    A protected property carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1240+(DMT-121)
+  related:
+    - code: TDV-PY-1040
+      relation: specializes
+
+TDV-PY-1250:
+  name: undocumented-protected-attribute
+  definition: >
+    A protected attribute carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1250+(DMT-126)
+  related:
+    - code: TDV-PY-1050
+      relation: specializes
+
+# 13xx — Private
+TDV-PY-1301:
+  name: undocumented-private-module
+  definition: >
+    A private module carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1301+(DMT-102)
+  related:
+    - code: TDV-PY-1001
+      relation: specializes
+
+TDV-PY-1310:
+  name: undocumented-private-class
+  definition: >
+    A private class carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1310+(DMT-107)
+  related:
+    - code: TDV-PY-1010
+      relation: specializes
+
+TDV-PY-1320:
+  name: undocumented-private-function
+  definition: >
+    A private function carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1320+(DMT-112)
+  related:
+    - code: TDV-PY-1020
+      relation: specializes
+
+TDV-PY-1330:
+  name: undocumented-private-method
+  definition: >
+    A private method carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1330+(DMT-117)
+  related:
+    - code: TDV-PY-1030
+      relation: specializes
+
+TDV-PY-1340:
+  name: undocumented-private-property
+  definition: >
+    A private property carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1340+(DMT-122)
+  related:
+    - code: TDV-PY-1040
+      relation: specializes
+
+TDV-PY-1350:
+  name: undocumented-private-attribute
+  definition: >
+    A private attribute carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1350+(DMT-127)
+  related:
+    - code: TDV-PY-1050
+      relation: specializes
+
+# 14xx — Other visibility
+TDV-PY-1401:
+  name: undocumented-other-visibility-module
+  definition: >
+    A module with other visibility carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1401+(DMT-103)
+  related:
+    - code: TDV-PY-1001
+      relation: specializes
+
+TDV-PY-1410:
+  name: undocumented-other-visibility-class
+  definition: >
+    A class with other visibility carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1410+(DMT-108)
+  related:
+    - code: TDV-PY-1010
+      relation: specializes
+
+TDV-PY-1420:
+  name: undocumented-other-visibility-function
+  definition: >
+    A function with other visibility carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1420+(DMT-113)
+  related:
+    - code: TDV-PY-1020
+      relation: specializes
+
+TDV-PY-1430:
+  name: undocumented-other-visibility-method
+  definition: >
+    A method with other visibility carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1430+(DMT-118)
+  related:
+    - code: TDV-PY-1030
+      relation: specializes
+
+TDV-PY-1440:
+  name: undocumented-other-visibility-property
+  definition: >
+    A property with other visibility carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1440+(DMT-123)
+  related:
+    - code: TDV-PY-1040
+      relation: specializes
+
+TDV-PY-1450:
+  name: undocumented-other-visibility-attribute
+  definition: >
+    An attribute with other visibility carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1450+(DMT-128)
+  related:
+    - code: TDV-PY-1050
+      relation: specializes
+
+# 15xx — Unknown visibility
+TDV-PY-1501:
+  name: undocumented-unknown-visibility-module
+  definition: >
+    A module whose visibility cannot be determined carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1501+(DMT-104)
+  related:
+    - code: TDV-PY-1001
+      relation: specializes
+
+TDV-PY-1510:
+  name: undocumented-unknown-visibility-class
+  definition: >
+    A class whose visibility cannot be determined carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1510+(DMT-109)
+  related:
+    - code: TDV-PY-1010
+      relation: specializes
+
+TDV-PY-1520:
+  name: undocumented-unknown-visibility-function
+  definition: >
+    A function whose visibility cannot be determined carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1520+(DMT-114)
+  related:
+    - code: TDV-PY-1020
+      relation: specializes
+
+TDV-PY-1530:
+  name: undocumented-unknown-visibility-method
+  definition: >
+    A method whose visibility cannot be determined carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1530+(DMT-119)
+  related:
+    - code: TDV-PY-1030
+      relation: specializes
+
+TDV-PY-1540:
+  name: undocumented-unknown-visibility-property
+  definition: >
+    A property whose visibility cannot be determined carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1540+(DMT-124)
+  related:
+    - code: TDV-PY-1040
+      relation: specializes
+
+TDV-PY-1550:
+  name: undocumented-unknown-visibility-attribute
+  definition: >
+    An attribute whose visibility cannot be determined carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-1550+(DMT-129)
+  related:
+    - code: TDV-PY-1050
+      relation: specializes
+
+
+# ============================================================================
+# 2xxx — Parameters
+# ============================================================================
+
+# 20xx — Signature/documentation correspondence
+TDV-PY-2001:
+  name: undocumented-parameter
+  definition: >
+    A parameter present in the callable signature is absent from the effective
+    documentation.
+  implementations:
+    docmethis:
+      code: DMT-2001+(DMT-200)
+      fixers:
+        - docmethis-fix
+    pydoclint:
+      code: DOC101
+    numpydoc:
+      code: PR01
+    pylint-docparams:
+      code: W9015
+      aliases:
+        - W9003
+    darglint:
+      code: DAR101
+
+TDV-PY-2002:
+  name: extraneous-parameter
+  definition: >
+    The documentation describes a parameter that does not exist in the callable
+    signature.
+  implementations:
+    docmethis:
+      code: DMT-2002+(DMT-201)
+      fixers:
+        - docmethis-fix
+    pydoclint:
+      code: DOC102
+    numpydoc:
+      code: PR02
+    pylint-docparams:
+      code: W9017
+    darglint:
+      code: DAR102
+    ruff:
+      code: DOC102
+
+TDV-PY-2003:
+  name: incorrect-parameter-order
+  definition: >
+    Documented parameters appear in an order that differs from the order in the
+    callable signature.
+  implementations:
+    docmethis:
+      code: DMT-2003+(DMT-202)
+      fixers:
+        - docmethis-fix
+    pydoclint:
+      code: DOC104
+    numpydoc:
+      code: PR03
+
+TDV-PY-2004:
+  name: parameter-set-mismatch
+  definition: >
+    The set of documented parameters does not match the set of parameters in the
+    signature.
+  related:
+    - code: TDV-PY-2001
+      relation: overlaps
+    - code: TDV-PY-2002
+      relation: overlaps
+  implementations:
+    pydoclint:
+      code: DOC103
+
+TDV-PY-2005:
+  name: all-parameters-undocumented
+  definition: >
+    None of the callable's parameters are documented at all.
+  related:
+    - code: TDV-PY-2001
+      relation: aggregate-of
+  implementations:
+    pylint-docparams:
+      code: W9021
+
+# 21xx — Types and annotations
+TDV-PY-2100:
+  name: missing-parameter-annotation
+  definition: >
+    A parameter of the callable lacks a type annotation in the signature.
+  implementations:
+    docmethis:
+      code: DMT-2100+(DMT-300)
+
+TDV-PY-2101:
+  name: missing-regular-parameter-annotation
+  definition: >
+    A regular (positional-or-keyword) parameter lacks a type annotation in the
+    signature.
+  related:
+    - code: TDV-PY-2100
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN001
+    ruff:
+      code: ANN001
+
+TDV-PY-2102:
+  name: missing-var-positional-annotation
+  definition: >
+    A *args parameter lacks a type annotation in the signature.
+  related:
+    - code: TDV-PY-2100
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN002
+    ruff:
+      code: ANN002
+
+TDV-PY-2103:
+  name: missing-var-keyword-annotation
+  definition: >
+    A **kwargs parameter lacks a type annotation in the signature.
+  related:
+    - code: TDV-PY-2100
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN003
+    ruff:
+      code: ANN003
+
+TDV-PY-2104:
+  name: missing-self-annotation
+  definition: >
+    The self parameter of a method lacks a type annotation.
+  related:
+    - code: TDV-PY-2100
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN101
+
+TDV-PY-2105:
+  name: missing-cls-annotation
+  definition: >
+    The cls parameter of a classmethod lacks a type annotation.
+  related:
+    - code: TDV-PY-2100
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN102
+
+TDV-PY-2110:
+  name: no-parameter-annotations-in-signature
+  definition: >
+    None of the signature parameters carry type annotations, although the
+    configured policy requires them.
+  related:
+    - code: TDV-PY-2100
+      relation: aggregate-of
+  implementations:
+    pydoclint:
+      code: DOC106
+      mapping: policy-dependent
+
+TDV-PY-2111:
+  name: incomplete-parameter-annotations-in-signature
+  definition: >
+    Only some signature parameters carry type annotations, while the configured
+    policy requires all of them.
+  related:
+    - code: TDV-PY-2100
+      relation: aggregate-of
+  implementations:
+    pydoclint:
+      code: DOC107
+      mapping: policy-dependent
+
+TDV-PY-2112:
+  name: forbidden-parameter-annotation
+  definition: >
+    A parameter carries a type annotation although the configured policy forbids
+    annotations in the signature.
+  implementations:
+    pydoclint:
+      code: DOC108
+      mapping: policy-dependent
+
+TDV-PY-2120:
+  name: missing-parameter-documented-type
+  definition: >
+    A documented parameter carries no type in the documentation.
+  implementations:
+    docmethis:
+      code: DMT-2120+(DMT-320)
+      fixers:
+        - docmethis-fix
+    pylint-docparams:
+      code: W9016
+      aliases:
+        - W9004
+    darglint:
+      code: DAR104
+
+TDV-PY-2121:
+  name: empty-parameter-documented-type
+  definition: >
+    A documented parameter carries an empty type entry.
+  related:
+    - code: TDV-PY-2120
+      relation: specializes
+  implementations:
+    darglint:
+      code: DAR005
+
+TDV-PY-2122:
+  name: no-parameter-documented-types
+  definition: >
+    None of the documented parameters carry types, although the configured policy
+    requires them.
+  related:
+    - code: TDV-PY-2120
+      relation: aggregate-of
+  implementations:
+    pydoclint:
+      code: DOC109
+      mapping: policy-dependent
+
+TDV-PY-2123:
+  name: incomplete-parameter-documented-types
+  definition: >
+    Only some documented parameters carry types, while the configured policy
+    requires all of them.
+  related:
+    - code: TDV-PY-2120
+      relation: aggregate-of
+  implementations:
+    pydoclint:
+      code: DOC110
+      mapping: policy-dependent
+
+TDV-PY-2124:
+  name: forbidden-parameter-documented-type
+  definition: >
+    A documented parameter carries a type although the configured policy forbids
+    types in the documentation.
+  implementations:
+    pydoclint:
+      code: DOC111
+      mapping: policy-dependent
+
+TDV-PY-2125:
+  name: inconsistent-parameter-documented-type
+  definition: >
+    The type documented for a parameter disagrees with the type declared in the
+    signature.
+  implementations:
+    docmethis:
+      code: DMT-2125+(DMT-330)
+    pydoclint:
+      code: DOC105
+    pylint-docparams:
+      code: W9018
+      mapping: review-required
+    darglint:
+      code: DAR103
+
+TDV-PY-2126:
+  name: malformed-parameter-type
+  definition: >
+    The type written for a parameter does not follow the expected type syntax
+    (such as PEP 484).
+  implementations:
+    darglint:
+      code: DAR105
+
+# 22xx — Parameter contract metadata
+TDV-PY-2201:
+  name: undocumented-default-value
+  definition: >
+    The documentation does not state the default value of a parameter that has
+    one.
+  implementations:
+    docmethis:
+      code: DMT-2201+(DMT-250)
+
+TDV-PY-2202:
+  name: ignored-parameter-documented
+  definition: >
+    Documentation is provided for a parameter that the project configuration
+    declares as ignored.
+  implementations:
+    pylint-docparams:
+      code: W9019
+
+TDV-PY-2203:
+  name: ignored-parameter-type-documented
+  definition: >
+    A type is documented for a parameter that the project configuration declares
+    as ignored.
+  implementations:
+    pylint-docparams:
+      code: W9020
+
+# 23xx — Description completeness
+TDV-PY-2301:
+  name: missing-parameter-description
+  definition: >
+    A documented parameter carries a type but no description of its meaning.
+  implementations:
+    pydocstyle:
+      code: D417
+    numpydoc:
+      code: PR07
+    darglint:
+      code: DAR002
+      mapping: broader
+      note: applies to arguments and exceptions alike
+    ruff:
+      code: D417
+
+
+# ============================================================================
+# 3xxx — Produced values
+# ============================================================================
+
+# 30xx — Return values
+TDV-PY-3001:
+  name: undocumented-return
+  definition: >
+    The callable returns a value that the documentation does not describe.
+  implementations:
+    docmethis:
+      code: DMT-3001+(DMT-230)
+      fixers:
+        - docmethis-fix
+    pydoclint:
+      code: DOC201
+    numpydoc:
+      code: RT01
+    pylint-docparams:
+      code: W9011
+      aliases:
+        - W9007
+    darglint:
+      code: DAR201
+    ruff:
+      code: DOC201
+
+TDV-PY-3002:
+  name: extraneous-return-documentation
+  definition: >
+    The documentation describes a return value although the callable produces
+    none.
+  implementations:
+    docmethis:
+      code: DMT-3002+(DMT-231)
+    pydoclint:
+      code: DOC202
+    pylint-docparams:
+      code: W9008
+    darglint:
+      code: DAR202
+    ruff:
+      code: DOC202
+
+TDV-PY-3003:
+  name: missing-return-annotation
+  definition: >
+    The callable's signature lacks a return type annotation.
+  implementations:
+    docmethis:
+      code: DMT-3003+(DMT-301)
+
+TDV-PY-3004:
+  name: missing-public-function-return-annotation
+  definition: >
+    A public function lacks a return type annotation.
+  related:
+    - code: TDV-PY-3003
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN201
+    ruff:
+      code: ANN201
+      fixers:
+        - ruff-check
+
+TDV-PY-3005:
+  name: missing-protected-function-return-annotation
+  definition: >
+    A protected function lacks a return type annotation.
+  related:
+    - code: TDV-PY-3003
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN202
+    ruff:
+      code: ANN202
+      fixers:
+        - ruff-check
+
+TDV-PY-3006:
+  name: missing-private-function-return-annotation
+  definition: >
+    A private function lacks a return type annotation.
+  related:
+    - code: TDV-PY-3003
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN203
+
+TDV-PY-3007:
+  name: missing-special-method-return-annotation
+  definition: >
+    A special (dunder) method lacks a return type annotation.
+  related:
+    - code: TDV-PY-3003
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN204
+    ruff:
+      code: ANN204
+      fixers:
+        - ruff-check
+
+TDV-PY-3008:
+  name: missing-staticmethod-return-annotation
+  definition: >
+    A staticmethod lacks a return type annotation.
+  related:
+    - code: TDV-PY-3003
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN205
+    ruff:
+      code: ANN205
+      fixers:
+        - ruff-check
+
+TDV-PY-3009:
+  name: missing-classmethod-return-annotation
+  definition: >
+    A classmethod lacks a return type annotation.
+  related:
+    - code: TDV-PY-3003
+      relation: specializes
+  implementations:
+    flake8-annotations:
+      code: ANN206
+    ruff:
+      code: ANN206
+      fixers:
+        - ruff-check
+
+TDV-PY-3010:
+  name: missing-return-documented-type
+  definition: >
+    A documented return value carries no type.
+  implementations:
+    docmethis:
+      code: DMT-3010+(DMT-321)
+      fixers:
+        - docmethis-fix
+    pylint-docparams:
+      code: W9012
+
+TDV-PY-3011:
+  name: inconsistent-return-documented-type
+  definition: >
+    The type documented for the return value disagrees with the return annotation.
+  implementations:
+    docmethis:
+      code: DMT-3011+(DMT-331)
+    pydoclint:
+      code: DOC203
+    darglint:
+      code: DAR203
+
+TDV-PY-3012:
+  name: missing-return-description
+  definition: >
+    A documented return value carries a type but no description.
+  implementations:
+    numpydoc:
+      code: RT03
+
+# 31xx — Yielded values
+TDV-PY-3101:
+  name: undocumented-yield
+  definition: >
+    The callable yields values that the documentation does not describe.
+  implementations:
+    docmethis:
+      code: DMT-3101+(DMT-260)
+    pydoclint:
+      code: DOC402
+    numpydoc:
+      code: YD01
+    pylint-docparams:
+      code: W9013
+      aliases:
+        - W9009
+    darglint:
+      code: DAR301
+    ruff:
+      code: DOC402
+
+TDV-PY-3102:
+  name: extraneous-yield-documentation
+  definition: >
+    The documentation describes yielded values although the callable yields none.
+  implementations:
+    docmethis:
+      code: DMT-3102+(DMT-261)
+    pydoclint:
+      code: DOC403
+    pylint-docparams:
+      code: W9010
+    darglint:
+      code: DAR302
+    ruff:
+      code: DOC403
+
+TDV-PY-3110:
+  name: missing-yield-documented-type
+  definition: >
+    Documented yielded values carry no type.
+  implementations:
+    pylint-docparams:
+      code: W9014
+
+TDV-PY-3111:
+  name: inconsistent-yield-documented-type
+  definition: >
+    The type documented for yielded values disagrees with the return annotation.
+  implementations:
+    pydoclint:
+      code: DOC404
+
+# 32xx — Generators combining return and yield
+TDV-PY-3201:
+  name: invalid-generator-return-annotation
+  definition: >
+    The callable combines return and yield statements, but its return annotation
+    does not use an appropriate generator form such as Generator.
+  implementations:
+    pydoclint:
+      code: DOC405
+
+
+# ============================================================================
+# 4xxx — Exceptions
+# ============================================================================
+
+# 40xx — Documented/exposed exception set
+TDV-PY-4001:
+  name: undocumented-exception
+  definition: >
+    An exception exposed by a callable is absent from its effective
+    documentation.
+  implementations:
+    docmethis:
+      code: DMT-4001+(DMT-240)
+      fixers:
+        - docmethis-fix
+    pydoclint:
+      code: DOC501
+    pylint-docparams:
+      code: W9006
+    darglint:
+      code: DAR401
+    ruff:
+      code: DOC501
+
+TDV-PY-4002:
+  name: extraneous-exception-documentation
+  definition: >
+    The effective documentation lists an exception that is not exposed by the
+    callable.
+  implementations:
+    docmethis:
+      code: DMT-4002+(DMT-241)
+      fixers:
+        - docmethis-fix
+    pydoclint:
+      code: DOC502
+    darglint:
+      code: DAR402
+    ruff:
+      code: DOC502
+
+TDV-PY-4003:
+  name: exception-set-mismatch
+  definition: >
+    The set of documented exceptions does not match the set of exceptions raised
+    by the callable.
+  related:
+    - code: TDV-PY-4001
+      relation: overlaps
+    - code: TDV-PY-4002
+      relation: overlaps
+  implementations:
+    pydoclint:
+      code: DOC503
+
+TDV-PY-4004:
+  name: undocumented-assertion-error
+  definition: >
+    The callable contains assertions whose potential AssertionError is not
+    documented.
+  related:
+    - code: TDV-PY-4001
+      relation: specializes
+  implementations:
+    pydoclint:
+      code: DOC504
+
+# 41xx — Exception contract content
+TDV-PY-4101:
+  name: missing-exception-description
+  definition: >
+    A documented exception carries no description of when it is raised.
+  implementations:
+    docmethis:
+      code: DMT-4101+(DMT-438)
+    darglint:
+      code: DAR002
+      mapping: broader
+      note: applies to arguments and exceptions alike
+
+TDV-PY-4102:
+  name: invalid-documented-exception-name
+  definition: >
+    A documented exception name is not a valid exception reference.
+  implementations:
+    docmethis:
+      code: DMT-4102+(DMT-439)
+
+# 42xx — BASE→HEAD exception contract changes
+TDV-PY-4201:
+  name: exposed-exception-documentation-drift
+  definition: >
+    An exception becomes exposed by a callable between BASE and HEAD,
+    but the effective HEAD documentation does not document that exception.
+  related:
+    - code: TDV-PY-4001
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-4201+(DMT-640)
+      fixers:
+        - docmethis-fix
+
+TDV-PY-4202:
+  name: removed-exception-documentation-drift
+  definition: >
+    An exception exposed by a callable in BASE is no longer exposed in
+    HEAD, but the effective HEAD documentation still documents that exception.
+  related:
+    - code: TDV-PY-4002
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-4202+(DMT-641)
+      fixers:
+        - docmethis-fix
+
+
+# ============================================================================
+# 5xxx — Structured objects
+# ============================================================================
+
+# 50xx — Classes and constructors
+TDV-PY-5001:
+  name: constructor-parameters-documented-twice
+  definition: >
+    Constructor parameters are documented in both the class docstring and the
+    __init__ docstring.
+  implementations:
+    pylint-docparams:
+      code: W9005
+
+TDV-PY-5002:
+  name: init-docstring-should-be-merged-with-class
+  definition: >
+    The __init__ method carries its own docstring although its documentation
+    should live in the class docstring.
+  implementations:
+    pydoclint:
+      code: DOC301
+
+TDV-PY-5003:
+  name: class-returns-section-unnecessary
+  definition: >
+    The class docstring contains a Returns section although __init__ cannot return
+    anything.
+  implementations:
+    pydoclint:
+      code: DOC302
+
+TDV-PY-5004:
+  name: init-returns-section-unnecessary
+  definition: >
+    The __init__ docstring contains a Returns section although it cannot return
+    anything.
+  implementations:
+    pydoclint:
+      code: DOC303
+
+TDV-PY-5005:
+  name: class-parameters-section-should-be-on-init
+  definition: >
+    The class docstring contains a parameters section that belongs in the __init__
+    docstring.
+  implementations:
+    pydoclint:
+      code: DOC304
+
+TDV-PY-5006:
+  name: class-raises-section-should-be-on-init
+  definition: >
+    The class docstring contains a Raises section that belongs in the __init__
+    docstring.
+  implementations:
+    pydoclint:
+      code: DOC305
+
+TDV-PY-5007:
+  name: class-yields-section-unnecessary
+  definition: >
+    The class docstring contains a Yields section although __init__ cannot yield
+    anything.
+  implementations:
+    pydoclint:
+      code: DOC306
+
+TDV-PY-5008:
+  name: init-yields-section-unnecessary
+  definition: >
+    The __init__ docstring contains a Yields section although it cannot yield
+    anything.
+  implementations:
+    pydoclint:
+      code: DOC307
+
+# 51xx — Attributes and documented variables
+TDV-PY-5101:
+  name: undocumented-class-attribute
+  definition: >
+    A class attribute is absent from the class documentation.
+  implementations:
+    pydoclint:
+      code: DOC601
+
+TDV-PY-5102:
+  name: extraneous-class-attribute-documentation
+  definition: >
+    The class documentation describes a class attribute that does not exist.
+  implementations:
+    pydoclint:
+      code: DOC602
+
+TDV-PY-5103:
+  name: class-attribute-set-mismatch
+  definition: >
+    The set of documented class attributes does not match the actual class
+    attributes.
+  implementations:
+    pydoclint:
+      code: DOC603
+
+TDV-PY-5104:
+  name: incorrect-class-attribute-order
+  definition: >
+    Documented class attributes appear in an order that differs from the class
+    definition.
+  implementations:
+    pydoclint:
+      code: DOC604
+
+TDV-PY-5105:
+  name: inconsistent-class-attribute-documented-type
+  definition: >
+    The type documented for a class attribute disagrees with its declared type.
+  implementations:
+    pydoclint:
+      code: DOC605
+
+TDV-PY-5106:
+  name: attribute-documented-inline-instead-of-class-docstring
+  definition: >
+    An attribute is documented inline in the code although it should be documented
+    in the class docstring.
+  implementations:
+    pydoclint:
+      code: DOC606
+
+TDV-PY-5107:
+  name: attributes-section-unnecessary-with-inline-docs
+  definition: >
+    The class docstring contains an Attributes section although the attributes are
+    documented inline.
+  implementations:
+    pydoclint:
+      code: DOC607
+
+TDV-PY-5108:
+  name: undefined-documented-variable
+  definition: >
+    The documentation describes a variable that is not defined anywhere in the
+    relevant scope.
+  implementations:
+    darglint:
+      code: DAR501
+
+# 52xx — Inheritance, overrides, and inherited documentation
+TDV-PY-5201:
+  name: method-override-documentation-drift
+  definition: >
+    A method's origin in its class hierarchy changes between BASE and HEAD,
+    for example between new, overridden, and inherited, but its effective
+    HEAD documentation does not reflect that change.
+  related:
+    - code: TDV-PY-7300
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-5201+(DMT-644)
+      fixers:
+        - docmethis-fix
+
+TDV-PY-5202:
+  name: inheritance-documentation-drift
+  definition: >
+    A class's direct inheritance changes between BASE and HEAD, but its
+    effective HEAD documentation does not reflect that change.
+  related:
+    - code: TDV-PY-7300
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-5202+(DMT-645)
+      fixers:
+        - docmethis-fix
+
+# 53xx — Overloads, abstract members, stubs, and protocols
+TDV-PY-5301:
+  name: overload-with-docstring
+  definition: >
+    An @overload-decorated declaration carries a docstring, although overload
+    declarations should remain documentation-free.
+  implementations:
+    pydocstyle:
+      code: D418
+    ruff:
+      code: D418
+
+TDV-PY-5302:
+  name: docstring-in-stub
+  definition: >
+    A stub file carries a docstring where the configured policy expects none.
+  implementations:
+    flake8-pyi:
+      code: Y021
+    ruff:
+      code: PYI021
+      fixers:
+        - ruff-check
+
+
+# ============================================================================
+# 6xxx — Representation and docstyles
+# ============================================================================
+
+# 60xx — Docstyle-independent Python docstring representation
+TDV-PY-6000:
+  name: inconsistent-docstring-indentation
+  definition: >
+    Lines inside the docstring are indented inconsistently.
+  implementations:
+    docmethis:
+      code: DMT-6000+(DMT-436)
+    darglint:
+      code: DAR003
+
+TDV-PY-6001:
+  name: unnecessary-multiline-docstring
+  definition: >
+    A docstring that fits on a single line is written over multiple lines.
+  implementations:
+    pydocstyle:
+      code: D200
+    ruff:
+      code: D200
+      fixers:
+        - ruff-check
+
+TDV-PY-6002:
+  name: blank-line-before-function
+  definition: >
+    Blank lines appear before a function docstring where none are allowed.
+  implementations:
+    pydocstyle:
+      code: D201
+    ruff:
+      code: D201
+      fixers:
+        - ruff-check
+
+TDV-PY-6003:
+  name: blank-line-after-function
+  definition: >
+    Blank lines appear after a function docstring where none are allowed.
+  implementations:
+    pydocstyle:
+      code: D202
+    ruff:
+      code: D202
+      fixers:
+        - ruff-check
+
+TDV-PY-6004:
+  name: incorrect-blank-line-before-class
+  definition: >
+    The number of blank lines before a class docstring is not the expected one.
+  implementations:
+    pydocstyle:
+      code: D203
+    ruff:
+      code: D203
+      fixers:
+        - ruff-check
+
+TDV-PY-6005:
+  name: incorrect-blank-line-after-class
+  definition: >
+    The number of blank lines after a class docstring is not the expected one.
+  implementations:
+    pydocstyle:
+      code: D204
+    ruff:
+      code: D204
+      fixers:
+        - ruff-check
+
+TDV-PY-6006:
+  name: missing-blank-line-after-summary
+  definition: >
+    A blank line is expected between the summary line and the extended description
+    but is missing.
+  implementations:
+    pydocstyle:
+      code: D205
+    ruff:
+      code: D205
+      fixers:
+        - ruff-check
+
+TDV-PY-6007:
+  name: docstring-tab-indentation
+  definition: >
+    The docstring is indented with tabs instead of spaces.
+  implementations:
+    pydocstyle:
+      code: D206
+    numpydoc:
+      code: GL05
+      mapping: overlap
+    ruff:
+      code: D206
+      fixers:
+        - ruff-format
+      fixer_conditions:
+        ruff-format: format.indent-style=space
+  related:
+    - code: TDV-PY-6000
+      relation: specializes
+
+TDV-PY-6008:
+  name: under-indentation
+  definition: >
+    The docstring is indented less than expected.
+  implementations:
+    pydocstyle:
+      code: D207
+    ruff:
+      code: D207
+      fixers:
+        - ruff-check
+        - ruff-format
+  related:
+    - code: TDV-PY-6000
+      relation: specializes
+
+TDV-PY-6009:
+  name: over-indentation
+  definition: >
+    The docstring is indented more than expected.
+  implementations:
+    pydocstyle:
+      code: D208
+    ruff:
+      code: D208
+      fixers:
+        - ruff-check
+        - ruff-format
+  related:
+    - code: TDV-PY-6000
+      relation: specializes
+
+TDV-PY-6010:
+  name: new-line-after-last-paragraph
+  definition: >
+    The closing quotes of a multi-line docstring should be on their own line after
+    the last paragraph.
+  implementations:
+    pydocstyle:
+      code: D209
+    numpydoc:
+      code: GL02
+      mapping: overlap
+    ruff:
+      code: D209
+      fixers:
+        - ruff-check
+
+TDV-PY-6011:
+  name: surrounding-whitespace
+  definition: >
+    The docstring text is surrounded by unwanted whitespace.
+  implementations:
+    pydocstyle:
+      code: D210
+    ruff:
+      code: D210
+      fixers:
+        - ruff-check
+
+TDV-PY-6012:
+  name: blank-line-before-class
+  definition: >
+    Blank lines appear before a class docstring where none are allowed.
+  implementations:
+    pydocstyle:
+      code: D211
+    ruff:
+      code: D211
+      fixers:
+        - ruff-check
+        - ruff-format
+
+TDV-PY-6013:
+  name: multi-line-summary-first-line
+  definition: >
+    A multi-line docstring starts its summary on the first line, while the
+    expected placement is the second line.
+  implementations:
+    pydocstyle:
+      code: D212
+    ruff:
+      code: D212
+      fixers:
+        - ruff-check
+
+TDV-PY-6014:
+  name: multi-line-summary-second-line
+  definition: >
+    A multi-line docstring starts its summary on the second line, while the
+    expected placement is the first line.
+  implementations:
+    pydocstyle:
+      code: D213
+    ruff:
+      code: D213
+      fixers:
+        - ruff-check
+
+TDV-PY-6015:
+  name: overindented-section
+  definition: >
+    A section header is indented more than expected.
+  implementations:
+    pydocstyle:
+      code: D214
+    ruff:
+      code: D214
+      fixers:
+        - ruff-check
+
+TDV-PY-6016:
+  name: overindented-section-underline
+  definition: >
+    A section underline is indented more than expected.
+  implementations:
+    pydocstyle:
+      code: D215
+    ruff:
+      code: D215
+      fixers:
+        - ruff-check
+
+TDV-PY-6017:
+  name: summary-opening-line-invalid
+  definition: >
+    The summary must start on the line immediately after the opening quotes; text
+    on the same line or after a blank line is invalid.
+  implementations:
+    numpydoc:
+      code: GL01
+
+TDV-PY-6018:
+  name: excessive-blank-line
+  definition: >
+    The docstring contains more consecutive blank lines than allowed.
+  implementations:
+    numpydoc:
+      code: GL03
+    darglint:
+      code: DAR004
+
+TDV-PY-6019:
+  name: docstring-first-line-empty
+  definition: >
+    The docstring starts with an empty first line.
+  implementations:
+    pylint-docstyle:
+      code: C0199
+
+TDV-PY-6020:
+  name: triple-single-quotes
+  definition: >
+    The docstring uses triple single quotes where triple double quotes are
+    expected.
+  implementations:
+    pydocstyle:
+      code: D300
+    pylint-docstyle:
+      code: C0198
+    ruff:
+      code: D300
+      fixers:
+        - ruff-check
+
+TDV-PY-6021:
+  name: escape-sequence-in-docstring
+  definition: >
+    The docstring contains a backslash escape sequence that is ambiguous or
+    requires a raw string.
+  implementations:
+    pydocstyle:
+      code: D301
+    ruff:
+      code: D301
+      fixers:
+        - ruff-check
+
+TDV-PY-6022:
+  name: unicode-docstring-prefix-required-deprecated
+  definition: >
+    The docstring requires a unicode prefix that is deprecated or no longer
+    needed.
+  implementations:
+    pydocstyle:
+      code: D302
+
+TDV-PY-6023:
+  name: docstring-quote-style-mismatch
+  definition: >
+    The docstring uses a quote style that does not match the configured policy.
+  implementations:
+    flake8-quotes:
+      code: Q002
+    ruff:
+      code: Q002
+      fixers:
+        - ruff-check
+        - ruff-format
+  related:
+    - code: TDV-PY-6020
+      relation: overlaps
+
+TDV-PY-6024:
+  name: f-string-docstring
+  definition: >
+    The docstring is written as an f-string, which is not appropriate for static
+    documentation.
+  implementations:
+    flake8-bugbear:
+      code: B021
+    ruff:
+      code: B021
+
+TDV-PY-6025:
+  name: docstring-line-too-long
+  definition: >
+    A line of the docstring exceeds the configured maximum length.
+  implementations:
+    pycodestyle:
+      code: W505
+      mapping: broader
+      note: includes comments in the measured line width
+    ruff:
+      code: W505
+      mapping: broader
+      note: includes comments in the measured line width
+
+TDV-PY-6026:
+  name: ambiguous-unicode-character-docstring
+  definition: >
+    The docstring contains a Unicode character that can be confused with a
+    different character.
+  implementations:
+    ruff:
+      code: RUF002
+
+TDV-PY-6030:
+  name: missing-trailing-period
+  definition: >
+    The summary line does not end with a period.
+  implementations:
+    pydocstyle:
+      code: D400
+    numpydoc:
+      code: SS03
+    ruff:
+      code: D400
+      fixers:
+        - ruff-check
+
+TDV-PY-6031:
+  name: non-imperative-mood
+  definition: >
+    The summary is not written in the imperative mood.
+  implementations:
+    pydocstyle:
+      code: D401
+    ruff:
+      code: D401
+
+TDV-PY-6032:
+  name: signature-in-docstring
+  definition: >
+    The first line repeats the function signature instead of summarizing its
+    behavior.
+  implementations:
+    pydocstyle:
+      code: D402
+    ruff:
+      code: D402
+
+TDV-PY-6033:
+  name: first-word-uncapitalized
+  definition: >
+    The first word of the summary is not capitalized.
+  implementations:
+    pydocstyle:
+      code: D403
+    numpydoc:
+      code: SS02
+    ruff:
+      code: D403
+      fixers:
+        - ruff-check
+
+TDV-PY-6034:
+  name: docstring-starts-with-this
+  definition: >
+    The summary begins with the word "This", which the configured policy
+    discourages.
+  implementations:
+    pydocstyle:
+      code: D404
+    ruff:
+      code: D404
+
+TDV-PY-6035:
+  name: missing-terminal-punctuation
+  definition: >
+    The summary does not end with a period, question mark, or exclamation point.
+  implementations:
+    pydocstyle:
+      code: D415
+    ruff:
+      code: D415
+      fixers:
+        - ruff-check
+
+TDV-PY-6036:
+  name: summary-leading-whitespace
+  definition: >
+    The summary contains leading whitespace.
+  implementations:
+    numpydoc:
+      code: SS04
+
+TDV-PY-6037:
+  name: summary-not-infinitive
+  definition: >
+    The summary does not start with an infinitive verb.
+  implementations:
+    numpydoc:
+      code: SS05
+
+TDV-PY-6038:
+  name: summary-not-single-line
+  definition: >
+    The summary spans more than one line.
+  implementations:
+    numpydoc:
+      code: SS06
+
+TDV-PY-6039:
+  name: empty-docstring
+  definition: >
+    The docstring is empty.
+  implementations:
+    pydocstyle:
+      code: D419
+    pylint-docstrings:
+      code: C0112
+      aliases:
+        - W0132
+    ruff:
+      code: D419
+  related:
+    - code: TDV-PY-7001
+      relation: specializes
+
+TDV-PY-6040:
+  name: non-capitalized-section-name
+  definition: >
+    A section name is not properly capitalized.
+  implementations:
+    pydocstyle:
+      code: D405
+    ruff:
+      code: D405
+      fixers:
+        - ruff-check
+
+TDV-PY-6041:
+  name: missing-new-line-after-section-name
+  definition: >
+    A section name is not followed by the expected newline.
+  implementations:
+    pydocstyle:
+      code: D406
+    ruff:
+      code: D406
+      fixers:
+        - ruff-check
+
+TDV-PY-6042:
+  name: no-blank-line-after-section
+  definition: >
+    A blank line is missing after a section.
+  implementations:
+    pydocstyle:
+      code: D410
+    ruff:
+      code: D410
+      fixers:
+        - ruff-check
+  related:
+    - code: TDV-PY-6051
+      relation: specializes
+
+TDV-PY-6043:
+  name: no-blank-line-before-section
+  definition: >
+    A blank line is missing before a section.
+  implementations:
+    pydocstyle:
+      code: D411
+    ruff:
+      code: D411
+      fixers:
+        - ruff-check
+  related:
+    - code: TDV-PY-6051
+      relation: specializes
+
+TDV-PY-6044:
+  name: blank-lines-between-header-and-content
+  definition: >
+    Blank lines appear between a section header and its content, where none are
+    allowed.
+  implementations:
+    pydocstyle:
+      code: D412
+    ruff:
+      code: D412
+      fixers:
+        - ruff-check
+
+TDV-PY-6045:
+  name: missing-blank-line-after-last-section
+  definition: >
+    A blank line is missing after the last section of the docstring.
+  implementations:
+    pydocstyle:
+      code: D413
+    ruff:
+      code: D413
+      fixers:
+        - ruff-check
+  related:
+    - code: TDV-PY-6051
+      relation: specializes
+
+TDV-PY-6046:
+  name: empty-docstring-section
+  definition: >
+    A section is present but contains no content.
+  implementations:
+    pydocstyle:
+      code: D414
+    ruff:
+      code: D414
+
+TDV-PY-6047:
+  name: duplicate-section
+  definition: >
+    The same section appears more than once in the docstring.
+  implementations:
+    docmethis:
+      code: DMT-6047+(DMT-410)
+
+TDV-PY-6048:
+  name: section-invalid-for-symbol
+  definition: >
+    The docstring contains a section that is not valid for this kind of symbol.
+  implementations:
+    docmethis:
+      code: DMT-6048+(DMT-411)
+
+TDV-PY-6049:
+  name: misspelled-section
+  definition: >
+    A section name is probably misspelled and should be replaced by a canonical
+    section name.
+  implementations:
+    docmethis:
+      code: DMT-6049+(DMT-401)
+
+TDV-PY-6050:
+  name: noncanonical-section-alias
+  definition: >
+    A section uses an alias that is not the canonical section name.
+  implementations:
+    docmethis:
+      code: DMT-6050+(DMT-402)
+
+TDV-PY-6051:
+  name: missing-docstring-blank-line
+  definition: >
+    A blank line separating docstring sections or paragraphs is missing.
+  implementations:
+    docmethis:
+      code: DMT-6051+(DMT-430)
+
+# 61xx — reStructuredText / Sphinx
+TDV-PY-6101:
+  name: rest-directive-missing-double-colon
+  definition: >
+    A reST directive is not followed by two colons as required.
+  implementations:
+    numpydoc:
+      code: GL10
+
+TDV-PY-6102:
+  name: rest-block-quote-missing-blank-line
+  definition: >
+    A reST block quote is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST201
+
+TDV-PY-6103:
+  name: rest-bullet-list-missing-blank-line
+  definition: >
+    A reST bullet list is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST202
+
+TDV-PY-6104:
+  name: rest-definition-list-missing-blank-line
+  definition: >
+    A reST definition list is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST203
+
+TDV-PY-6105:
+  name: rest-enumerated-list-missing-blank-line
+  definition: >
+    A reST enumerated list is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST204
+
+TDV-PY-6106:
+  name: rest-explicit-markup-missing-blank-line
+  definition: >
+    reST explicit markup is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST205
+
+TDV-PY-6107:
+  name: rest-field-list-missing-blank-line
+  definition: >
+    A reST field list is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST206
+
+TDV-PY-6108:
+  name: rest-literal-block-missing-blank-line
+  definition: >
+    A reST literal block is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST207
+
+TDV-PY-6109:
+  name: rest-option-list-missing-blank-line
+  definition: >
+    A reST option list is not preceded by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST208
+
+TDV-PY-6110:
+  name: rest-unclosed-inline-strong
+  definition: >
+    An inline reST strong markup (double asterisks) is not closed.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST210
+
+TDV-PY-6111:
+  name: rest-missing-blank-line-after-table
+  definition: >
+    A reST table is not followed by a blank line as required.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST211
+
+TDV-PY-6112:
+  name: rest-title-underline-too-short
+  definition: >
+    A reST title underline is too short.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST212
+
+TDV-PY-6113:
+  name: rest-unclosed-inline-emphasis
+  definition: >
+    An inline reST emphasis markup (single asterisk) is not closed.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST213
+
+TDV-PY-6114:
+  name: rest-unclosed-inline-literal
+  definition: >
+    An inline reST literal markup (double backquotes) is not closed.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST214
+
+TDV-PY-6115:
+  name: rest-unclosed-interpreted-text-or-phrase-reference
+  definition: >
+    An inline reST interpreted text or phrase reference is not closed.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST215
+
+TDV-PY-6116:
+  name: rest-multiple-interpreted-text-roles
+  definition: >
+    Multiple interpreted text roles are given for a single inline markup.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST216
+
+TDV-PY-6117:
+  name: rest-role-reference-suffix-mismatch
+  definition: >
+    The role reference suffix does not match the role used in the markup.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST217
+
+TDV-PY-6118:
+  name: rest-missing-literal-block
+  definition: >
+    The text announces a reST literal block but none follows.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST218
+
+TDV-PY-6119:
+  name: rest-unclosed-substitution-reference
+  definition: >
+    A reST substitution reference is not closed.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST219
+
+TDV-PY-6120:
+  name: rest-duplicate-explicit-target-name
+  definition: >
+    The same reST explicit target name is defined more than once.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST220
+
+TDV-PY-6121:
+  name: rest-unclassified-warning
+  definition: >
+    The reST parser produced an unclassified warning.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST299
+
+TDV-PY-6122:
+  name: rest-unexpected-indentation
+  definition: >
+    The reST parser found unexpected indentation.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST301
+
+TDV-PY-6123:
+  name: rest-malformed-table
+  definition: >
+    A reST table is malformed.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST302
+
+TDV-PY-6124:
+  name: rest-unknown-directive
+  definition: >
+    The docstring uses a reST directive that is not recognized.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST303
+
+TDV-PY-6125:
+  name: rest-unknown-interpreted-text-role
+  definition: >
+    The docstring uses a reST interpreted text role that is not recognized.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST304
+
+TDV-PY-6126:
+  name: rest-undefined-substitution
+  definition: >
+    The docstring references a reST substitution that is not defined.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST305
+
+TDV-PY-6127:
+  name: rest-unknown-target
+  definition: >
+    A reST cross-reference target is unknown.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST306
+
+TDV-PY-6128:
+  name: rest-directive-error
+  definition: >
+    A reST directive raised an error while parsing the docstring.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST307
+
+TDV-PY-6129:
+  name: rest-duplicate-target-name
+  definition: >
+    The same reST target name is defined more than once.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST308
+
+TDV-PY-6130:
+  name: rest-unexpected-section-title
+  definition: >
+    A section title appears where the reST structure does not allow one.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST309
+      aliases:
+        - RST401
+
+TDV-PY-6131:
+  name: rest-unclassified-error
+  definition: >
+    The reST parser produced an unclassified error.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST399
+
+TDV-PY-6132:
+  name: rest-unclassified-severe-error
+  definition: >
+    The reST parser produced an unclassified severe error.
+  implementations:
+    flake8-rst-docstrings:
+      code: RST499
+
+# 62xx — NumPy
+TDV-PY-6200:
+  name: invalid-numpy-section-underline
+  definition: >
+    A NumPy section underline is invalid.
+  implementations:
+    docmethis:
+      code: DMT-6200+(DMT-431)
+
+TDV-PY-6201:
+  name: unknown-numpy-section
+  definition: >
+    The docstring contains a section that is not part of the NumPy style.
+  implementations:
+    docmethis:
+      code: DMT-6201+(DMT-400)
+      mapping: overlap
+      note: reflects the current numpydoc implementation
+    numpydoc:
+      code: GL06
+
+TDV-PY-6202:
+  name: incorrect-numpy-section-order
+  definition: >
+    NumPy sections appear in an order that differs from the canonical order.
+  implementations:
+    docmethis:
+      code: DMT-6202+(DMT-420)
+      mapping: overlap
+      note: reflects the current numpydoc implementation
+    numpydoc:
+      code: GL07
+    ruff:
+      code: D420
+      condition: convention=numpy
+
+TDV-PY-6203:
+  name: missing-dashed-underline-after-section
+  definition: >
+    A dashed underline is missing after a NumPy section header.
+  implementations:
+    pydocstyle:
+      code: D407
+    ruff:
+      code: D407
+      fixers:
+        - ruff-check
+  related:
+    - code: TDV-PY-6200
+      relation: specializes
+
+TDV-PY-6204:
+  name: missing-section-underline-after-name
+  definition: >
+    The section underline does not immediately follow the section name.
+  implementations:
+    pydocstyle:
+      code: D408
+    ruff:
+      code: D408
+      fixers:
+        - ruff-check
+  related:
+    - code: TDV-PY-6200
+      relation: specializes
+
+TDV-PY-6205:
+  name: mismatched-section-underline-length
+  definition: >
+    The section underline length does not match the section name length.
+  implementations:
+    pydocstyle:
+      code: D409
+    ruff:
+      code: D409
+      fixers:
+        - ruff-check
+  related:
+    - code: TDV-PY-6200
+      relation: specializes
+
+TDV-PY-6210:
+  name: numpy-parameter-missing-colon
+  definition: >
+    A NumPy parameter entry lacks the colon that separates the name from the type.
+  implementations:
+    docmethis:
+      code: DMT-6210+(DMT-432)
+
+TDV-PY-6211:
+  name: numpy-empty-parameter-name
+  definition: >
+    A NumPy parameter entry has an empty name before the colon.
+  implementations:
+    docmethis:
+      code: DMT-6211+(DMT-434)
+
+TDV-PY-6212:
+  name: numpy-incorrect-spacing-after-parameter-colon
+  definition: >
+    The spacing around the colon of a NumPy parameter entry is incorrect.
+  implementations:
+    docmethis:
+      code: DMT-6212+(DMT-435)
+
+TDV-PY-6213:
+  name: numpy-parameter-type-trailing-period
+  definition: >
+    A NumPy parameter type ends with a period, which is not expected.
+  implementations:
+    numpydoc:
+      code: PR05
+
+TDV-PY-6214:
+  name: numpy-noncanonical-parameter-type
+  definition: >
+    A NumPy parameter type uses a non-canonical form where a canonical form
+    exists.
+  implementations:
+    numpydoc:
+      code: PR06
+
+TDV-PY-6215:
+  name: numpy-parameter-description-not-capitalized
+  definition: >
+    A NumPy parameter description does not start with a capital letter.
+  implementations:
+    numpydoc:
+      code: PR08
+
+TDV-PY-6216:
+  name: numpy-parameter-description-missing-terminal-period
+  definition: >
+    A NumPy parameter description does not end with a period.
+  implementations:
+    numpydoc:
+      code: PR09
+
+TDV-PY-6217:
+  name: numpy-parameter-missing-space-before-colon
+  definition: >
+    A NumPy parameter entry has no space before the colon.
+  implementations:
+    numpydoc:
+      code: PR10
+
+TDV-PY-6218:
+  name: numpy-parameter-missing-type
+  definition: >
+    A NumPy parameter entry declares no type.
+  related:
+    - code: TDV-PY-2120
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-6218+(DMT-433)
+    numpydoc:
+      code: PR04
+
+TDV-PY-6220:
+  name: malformed-numpy-returns-entry
+  definition: >
+    A NumPy Returns entry is malformed, for example with the type and the
+    description inverted.
+  implementations:
+    docmethis:
+      code: DMT-6220+(DMT-437)
+    numpydoc:
+      code: RT02
+
+TDV-PY-6221:
+  name: numpy-return-description-not-capitalized
+  definition: >
+    A NumPy return description does not start with a capital letter.
+  implementations:
+    numpydoc:
+      code: RT04
+
+TDV-PY-6222:
+  name: numpy-return-description-missing-terminal-period
+  definition: >
+    A NumPy return description does not end with a period.
+  implementations:
+    numpydoc:
+      code: RT05
+
+TDV-PY-6230:
+  name: numpy-see-also-description-missing-terminal-period
+  definition: >
+    A NumPy See Also description does not end with a period.
+  implementations:
+    numpydoc:
+      code: SA02
+
+TDV-PY-6231:
+  name: numpy-see-also-description-not-capitalized
+  definition: >
+    A NumPy See Also description does not start with a capital letter.
+  implementations:
+    numpydoc:
+      code: SA03
+
+TDV-PY-6232:
+  name: missing-numpy-see-also-description
+  definition: >
+    A NumPy See Also reference carries no description.
+  implementations:
+    numpydoc:
+      code: SA04
+
+TDV-PY-6240:
+  name: invalid-numpy-raises-entry-layout
+  definition: >
+    A NumPy Raises entry does not follow the expected layout, such as the
+    exception name and its description on separate lines.
+  implementations:
+    docmethis:
+      code: DMT-6240+(DMT-441)
+
+# 63xx — Google
+TDV-PY-6301:
+  name: missing-section-name-colon
+  definition: >
+    A section name is not followed by a colon where one is required.
+  implementations:
+    pydocstyle:
+      code: D416
+    ruff:
+      code: D416
+      condition: convention=google
+      fixers:
+        - ruff-check
+
+TDV-PY-6302:
+  name: incorrect-section-order
+  definition: >
+    The docstring sections appear in an order that differs from the expected
+    order.
+  implementations:
+    ruff:
+      code: D420
+      condition: convention=google
+
+TDV-PY-6303:
+  name: property-docstring-starts-with-verb
+  definition: >
+    A property docstring starts with a verb, while the configured policy expects a
+    noun-phrase description.
+  implementations:
+    ruff:
+      code: D421
+
+
+# ============================================================================
+# 7xxx — Quality and semantics
+# ============================================================================
+
+# 70xx — Summary
+TDV-PY-7001:
+  name: missing-summary
+  definition: >
+    The docstring has no summary.
+  implementations:
+    docmethis:
+      code: DMT-7001+(DMT-500)
+      mapping: overlap
+    numpydoc:
+      code: SS01
+
+TDV-PY-7002:
+  name: summary-too-short
+  definition: >
+    The summary is too short to convey the purpose of the symbol.
+  implementations:
+    docmethis:
+      code: DMT-7002+(DMT-600)
+
+TDV-PY-7003:
+  name: summary-too-generic
+  definition: >
+    The summary is too generic and could apply to almost any symbol.
+  implementations:
+    docmethis:
+      code: DMT-7003+(DMT-601)
+
+TDV-PY-7004:
+  name: summary-identical-to-symbol-name
+  definition: >
+    The summary merely repeats the symbol name without adding information.
+  implementations:
+    docmethis:
+      code: DMT-7004+(DMT-602)
+
+# 71xx — Contract element descriptions
+TDV-PY-7101:
+  name: parameter-description-too-weak
+  definition: >
+    A parameter description is too weak to convey the meaning of the parameter.
+  implementations:
+    docmethis:
+      code: DMT-7101+(DMT-610)
+
+TDV-PY-7102:
+  name: return-description-too-weak
+  definition: >
+    A return description is too weak to convey the meaning of the returned value.
+  implementations:
+    docmethis:
+      code: DMT-7102+(DMT-611)
+
+# 72xx — Boilerplate and lexical hygiene
+TDV-PY-7200:
+  name: boilerplate-or-forbidden-vocabulary
+  definition: >
+    The documentation contains boilerplate or vocabulary that the project forbids.
+  implementations:
+    docmethis:
+      code: DMT-7200+(DMT-620)
+
+TDV-PY-7201:
+  name: boilerplate-documentation
+  definition: >
+    The documentation consists of generic boilerplate without real content.
+  related:
+    - code: TDV-PY-7200
+      relation: specializes
+
+TDV-PY-7202:
+  name: forbidden-vocabulary
+  definition: >
+    The documentation uses a word the project forbids, such as "always" or
+    "guarantees".
+  related:
+    - code: TDV-PY-7200
+      relation: specializes
+
+TDV-PY-7203:
+  name: misspelled-docstring-word
+  definition: >
+    The docstring contains a misspelled word.
+  implementations:
+    pylint-spelling:
+      code: C0402
+
+# 73xx — Factual fidelity
+TDV-PY-7300:
+  name: documentation-behavior-misalignment
+  definition: >
+    The documentation is not aligned with the observable behavior of the
+    symbol: it may contradict it, or it may fail to reflect a behavior change
+    between BASE and HEAD.
+  related:
+    - code: TDV-PY-7501
+      relation: specializes
+
+TDV-PY-7301:
+  name: documentation-inconsistent-with-behavior
+  definition: >
+    The documentation describes behavior that contradicts the behavior actually
+    observed on the symbol.
+  related:
+    - code: TDV-PY-7300
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-7301+(DMT-630)
+
+TDV-PY-7302:
+  name: io-effect-documentation-drift
+  definition: >
+    An observable I/O effect changes between BASE and HEAD, but the
+    HEAD documentation does not reflect the changed effect.
+  related:
+    - code: TDV-PY-7300
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-7302+(DMT-642)
+      fixers:
+        - docmethis-fix
+
+TDV-PY-7303:
+  name: observable-property-documentation-drift
+  definition: >
+    An observable property extracted from a callable changes between BASE and
+    HEAD, but the effective HEAD documentation does not reflect the changed
+    property.
+  related:
+    - code: TDV-PY-7300
+      relation: specializes
+  implementations:
+    docmethis:
+      code: DMT-7303+(DMT-643)
+      fixers:
+        - docmethis-fix
+
+# 74xx — Claims and overstatement
+TDV-PY-7401:
+  name: documentation-overclaim
+  definition: >
+    The documentation promises more than the symbol actually guarantees.
+  implementations:
+    docmethis:
+      code: DMT-7401+(DMT-631)
+
+# 75xx — Semantic drift and consistency
+TDV-PY-7501:
+  name: semantic-drift
+  definition: >
+    The meaning of the documentation has drifted away from the behavior it
+    describes.
+  implementations:
+    docmethis:
+      code: DMT-7501+(DMT-632)
+
+
+# ============================================================================
+# 8xxx — Editorial policy and references
+# ============================================================================
+
+# 80xx — Sections required by policy
+TDV-PY-8001:
+  name: parameters-section-required-by-policy
+  definition: >
+    The configured policy requires a Parameters section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8001+(DMT-510)
+
+TDV-PY-8002:
+  name: returns-section-required-by-policy
+  definition: >
+    The configured policy requires a Returns section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8002+(DMT-511)
+
+TDV-PY-8003:
+  name: yields-section-required-by-policy
+  definition: >
+    The configured policy requires a Yields section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8003+(DMT-512)
+
+TDV-PY-8004:
+  name: raises-section-required-by-policy
+  definition: >
+    The configured policy requires a Raises section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8004+(DMT-513)
+
+TDV-PY-8005:
+  name: attributes-section-required-by-policy
+  definition: >
+    The configured policy requires an Attributes section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8005+(DMT-514)
+
+TDV-PY-8010:
+  name: missing-examples-section
+  definition: >
+    The configured policy requires an Examples section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8010+(DMT-520)
+    numpydoc:
+      code: EX01
+
+TDV-PY-8011:
+  name: missing-notes-section
+  definition: >
+    The configured policy requires a Notes section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8011+(DMT-521)
+
+TDV-PY-8012:
+  name: missing-see-also-section
+  definition: >
+    The configured policy requires a See Also section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8012+(DMT-530)
+    numpydoc:
+      code: SA01
+
+TDV-PY-8013:
+  name: missing-references-section
+  definition: >
+    The configured policy requires a References section, but none is present.
+  implementations:
+    docmethis:
+      code: DMT-8013+(DMT-531)
+
+TDV-PY-8014:
+  name: missing-extended-summary
+  definition: >
+    The docstring lacks an extended summary after the summary line.
+  implementations:
+    numpydoc:
+      code: ES01
+
+# 81xx — See Also and editorial internal references
+TDV-PY-8101:
+  name: missing-see-also-target
+  definition: >
+    A See Also entry refers to a target that cannot be resolved.
+  implementations:
+    docmethis:
+      code: DMT-8101+(DMT-701)
+
+# 82xx — Symbolic references
+TDV-PY-8201:
+  name: missing-symbolic-reference
+  definition: >
+    The documentation references a symbol that does not exist.
+  implementations:
+    docmethis:
+      code: DMT-8201+(DMT-700)
+
+# 83xx — External links
+TDV-PY-8301:
+  name: invalid-external-link
+  definition: >
+    An external link in the documentation is invalid.
+  implementations:
+    docmethis:
+      code: DMT-8301+(DMT-710)
+
+# 84xx — Bibliography and citations
+TDV-PY-8401:
+  name: malformed-bibliographic-reference
+  definition: >
+    A bibliographic reference in the documentation is malformed.
+  implementations:
+    docmethis:
+      code: DMT-8401+(DMT-720)
+
+# 85xx — Sphinx, MkDocs, and documentation-system targets
+TDV-PY-8501:
+  name: invalid-sphinx-target
+  definition: >
+    A Sphinx cross-reference target in the documentation is invalid.
+  implementations:
+    docmethis:
+      code: DMT-8501+(DMT-730)
+
+TDV-PY-8502:
+  name: invalid-mkdocs-target
+  definition: >
+    An MkDocs cross-reference target in the documentation is invalid.
+  implementations:
+    docmethis:
+      code: DMT-8502+(DMT-731)
+
+# 86xx — Version and deprecation metadata
+TDV-PY-8601:
+  name: deprecation-warning-misordered
+  definition: >
+    A deprecation warning is not placed before the extended summary.
+  implementations:
+    numpydoc:
+      code: GL09
+
+
+# ============================================================================
+# 9xxx — Python API exposure
+# ============================================================================
+
+# 90xx — __all__ and exports
+TDV-PY-9001:
+  name: undocumented-all-export
+  definition: >
+    An entry of the module's __all__ carries no documentation.
+  implementations:
+    docmethis:
+      code: DMT-9001+(DMT-800)
+
+TDV-PY-9002:
+  name: public-export-inconsistent-with-all
+  definition: >
+    A public export is inconsistent with the module's __all__ declaration.
+  implementations:
+    docmethis:
+      code: DMT-9002+(DMT-801)
+
+# ============================================================================
+# Reserved-range index
+# ============================================================================
+# 0xxx — Parsing and validation
+#   00xx — Source and docstring parsing
+#   01xx — Docstyle identification and compatibility
+#   02xx–08xx — Reserved
+#   09xx — Experimental
+# 1xxx — Missing documentation
+#   10xx — Visibility-independent
+#   11xx — Public
+#   12xx — Protected
+#   13xx — Private
+#   14xx — Other visibility
+#   15xx — Unknown visibility
+#   16xx–18xx — Reserved
+#   19xx — Experimental
+# 2xxx — Parameters
+#   20xx — Signature/documentation correspondence
+#   21xx — Types and annotations
+#   22xx — Parameter contract metadata
+#   23xx — Description completeness
+#   24xx–28xx — Reserved
+#   29xx — Experimental
+# 3xxx — Produced values
+#   30xx — Return values
+#   31xx — Yielded values
+#   32xx — Generators combining return and yield
+#   33xx–38xx — Reserved
+#   39xx — Experimental
+# 4xxx — Exceptions
+#   40xx — Documented/exposed exception set
+#   41xx — Exception contract content
+#   42xx — BASE→HEAD exception contract changes
+#   43xx–48xx — Reserved
+#   49xx — Experimental
+# 5xxx — Structured objects
+#   50xx — Classes and constructors
+#   51xx — Attributes and documented variables
+#   52xx — Inheritance, overrides, and inherited documentation
+#   53xx — Overloads, abstract members, stubs, and protocols
+#   54xx–58xx — Reserved
+#   59xx — Experimental
+# 6xxx — Representation and docstyles
+#   60xx — Docstyle-independent Python docstring representation
+#   61xx — reStructuredText / Sphinx
+#   62xx — NumPy
+#   63xx — Google
+#   64xx–68xx — Reserved for additional docstyles
+#   69xx — Experimental
+# 7xxx — Quality and semantics
+#   70xx — Summary
+#   71xx — Contract element descriptions
+#   72xx — Boilerplate and lexical hygiene
+#   73xx — Factual fidelity
+#   74xx — Claims and overstatement
+#   75xx — Semantic drift and consistency
+#   76xx — Examples and doctests
+#   77xx — Cross-document prose consistency
+#   78xx — Reserved
+#   79xx — Experimental
+# 8xxx — Editorial policy and references
+#   80xx — Sections required by policy
+#   81xx — See Also and editorial internal references
+#   82xx — Symbolic references
+#   83xx — External links
+#   84xx — Bibliography and citations
+#   85xx — Sphinx, MkDocs, and documentation-system targets
+#   86xx — Version and deprecation metadata
+#   87xx–88xx — Reserved
+#   89xx — Experimental
+# 9xxx — Python API exposure
+#   90xx — __all__ and exports
+#   91xx — Re-exports and public API surface
+#   92xx–98xx — Reserved
+#   99xx — Experimental
+
+# ============================================================================
+# Source codes intentionally not assigned a TDV-PY rule
+# ============================================================================
+#
+# DocMeThis product/infrastructure codes (not documentation diagnostics):
+#   DMT-CORE-000  internal unexpected error
+#   DMT-CORE-001  invalid configuration
+#   DMT-CORE-020  file excluded or ignored by configuration
+#   DMT-CORE-030  unsupported language
+#   DMT-CORE-031  unsupported docstyle
+#   DMT-CORE-999  generic configuration pseudo-code
+#
+# Upstream codes outside the TDV-PY documentation scope:
+#   ANN401    disallow typing.Any (source typing policy)
+#   ANN402    disallow type comments (source typing policy)
+#   C0403     spellchecker internal error (Enchant); nothing to fix in the code
+#   RST900    source file load failure (operational diagnostic)
+#   RST903    docstring lint internal error (operational diagnostic)
+#
+# Deprecated or historical upstream codes without an active semantic rule:
+#   DOC401    deprecated; no longer emitted by pydoclint
+#   RST901    no longer used by flake8-rst-docstrings
+#   RST902    no longer used by flake8-rst-docstrings
