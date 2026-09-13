@@ -1251,6 +1251,22 @@ TDV-PY-4202:
         - docmethis-fix
 
 
+# 43xx — Class-level aggregate exception contract
+TDV-PY-4301:
+  name: undocumented-class-aggregate-exception
+  definition: >
+    Under a class-level exception documentation policy, an exception exposed by
+    one or more covered methods is absent from the class's effective Raises
+    documentation.
+  related:
+    - code: TDV-PY-4001
+      relation: aggregate-of
+  implementations:
+    docmethis:
+      code: DMT-4301
+      mapping: policy-dependent
+
+
 # ============================================================================
 # 5xxx — Structured objects
 # ============================================================================
