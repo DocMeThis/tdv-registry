@@ -1069,6 +1069,19 @@ TDV-PY-3012:
     numpydoc:
       code: RT03
 
+TDV-PY-3013:
+  name: value-return-annotation-without-normal-return
+  definition: >
+    A callable's declared return annotation permits a value, but static analysis
+    establishes that the callable has no normal return path. This identifies an
+    imprecise return contract; it does not imply that the annotation is invalid
+    under Python's type system.
+  implementations:
+    docmethis:
+      code: DMT-3013
+      mapping: narrower
+      note: emitted only for a resolved value or nullable annotation and a proven-absent normal return path
+
 # 31xx — Yielded values
 TDV-PY-3101:
   name: undocumented-yield
